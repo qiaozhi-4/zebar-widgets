@@ -1,14 +1,14 @@
 {
   "$schema": "https://raw.githubusercontent.com/glzr-io/zebar/v3.3.1/resources/zpack-schema.json",
   "name": "zebar-widgets",
-  "version": "0.2.0",
-  "description": "React + Vite widget pack: a floating clock and a system monitor card.",
+  "version": "0.3.0",
+  "description": "React + Vite widget pack: a single desktop panel with clock and system stats.",
   "tags": ["clock", "system-monitor", "react"],
   "repositoryUrl": "",
   "widgets": [
     {
-      "name": "clock",
-      "htmlPath": "./dist/clock.html",
+      "name": "panel",
+      "htmlPath": "./dist/panel.html",
       "zOrder": "normal",
       "shownInTaskbar": false,
       "focused": false,
@@ -29,42 +29,7 @@
           "offsetX": "-24px",
           "offsetY": "24px",
           "width": "300px",
-          "height": "150px",
-          "monitorSelection": {
-            "type": "primary"
-          },
-          "dockToEdge": {
-            "enabled": false,
-            "edge": null,
-            "windowMargin": "0px"
-          }
-        }
-      ]
-    },
-    {
-      "name": "sysmon",
-      "htmlPath": "./dist/sysmon.html",
-      "zOrder": "normal",
-      "shownInTaskbar": false,
-      "focused": false,
-      "resizable": false,
-      "transparent": true,
-      "includeFiles": ["dist/**/*"],
-      "caching": {
-        "defaultDuration": 604800,
-        "rules": []
-      },
-      "privileges": {
-        "shellCommands": []
-      },
-      "presets": [
-        {
-          "name": "default",
-          "anchor": "top_right",
-          "offsetX": "-24px",
-          "offsetY": "188px",
-          "width": "300px",
-          "height": "190px",
+          "height": "290px",
           "monitorSelection": {
             "type": "primary"
           },

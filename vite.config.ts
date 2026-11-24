@@ -10,8 +10,7 @@ export default defineConfig({
     target: 'chrome110',
     rollupOptions: {
       input: {
-        clock: 'clock.html',
-        sysmon: 'sysmon.html',
+        panel: 'panel.html',
       },
     },
   },

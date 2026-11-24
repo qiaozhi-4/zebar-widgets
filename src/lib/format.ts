@@ -4,11 +4,12 @@ const timeFmt = new Intl.DateTimeFormat('zh-CN', {
   hour12: false,
 });
 
-const dayFmt = new Intl.DateTimeFormat('zh-CN', {
-  month: '2-digit',
-  day: '2-digit',
-  weekday: 'short',
+const dateFmt = new Intl.DateTimeFormat('zh-CN', {
+  month: 'long',
+  day: 'numeric',
 });
+
+const weekFmt = new Intl.DateTimeFormat('zh-CN', { weekday: 'long' });
 
 export type Tone = 'ok' | 'warn' | 'hot';
 
@@ -30,26 +31,6 @@ export function timeParts(date: Date): { hhmm: string; ss: string } {
   };
 }
 
-export function dayLabel(date: Date): string {
-  return dayFmt.format(date);
-}
-
-const WEATHER: Record<string, string> = {
-  clear_day: '晴',
-  clear_night: '晴',
-  cloudy_day: '多云',
-  cloudy_night: '多云',
-  light_rain_day: '小雨',
-  light_rain_night: '小雨',
-  heavy_rain_day: '大雨',
-  heavy_rain_night: '大雨',
-  snow_day: '雪',
-  snow_night: '雪',
-  thunder_day: '雷雨',
-  thunder_night: '雷雨',
-};
-
-export function weatherLabel(status: string | undefined | null): string {
-  if (!status) return '—';
-  return WEATHER[status] ?? '—';
+export function dateLabel(date: Date): string {
+  return `${dateFmt.format(date)} ${weekFmt.format(date)}`;
 }

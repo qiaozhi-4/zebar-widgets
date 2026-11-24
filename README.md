@@ -1,25 +1,36 @@
 # zebar-widgets
 
 Zebar **v3.3.1** 的 widget pack，React 19 + Vite 8 + TypeScript。
-两个桌面卡片，不占用任务栏区域：
+一张桌面卡片 `panel`（300 宽），右上角竖排，不占用任务栏区域：
 
-| 组件 | 尺寸 | 位置 | 内容 |
-| --- | --- | --- | --- |
-| `clock` | 300×150 | 右上 `(2236, 24)` | 时间 / 秒 / 日期 |
-| `sysmon` | 300×170 | 右上 `(2236, 188)` | 主机名、CPU、内存、C 盘 |
+```
+DESKTOP-XXXX                        系统
+09:58                    36
+11月24日 星期一
+────────────────────────────────
+CPU                    28 线程   26%
+[====          ]
+MEM              26.8 / 31.8 GB  84%
+[========      ]
+────────────────────────────────
+C:   [███████░]  78%
+D:   [█████░░░]  59%
+E:   [██████░░]  67%
+```
+
+时钟和系统信息放在**同一个窗口**里，只占一个 WebView2 renderer
+（两个窗口的方案实测多花 75 MB 内存，见下）。
 
 ## 结构
 
 ```
 zpack.json            ← pack 定义（Zebar 只认这个文件，一层深度）
-clock.html            ← Vite 入口，产物进 dist/clock.html
-sysmon.html
+panel.html            ← Vite 入口，产物进 dist/panel.html
 src/
   lib/useZebar.ts     ← 订阅 provider 的 hook（含浏览器降级）
-  lib/format.ts       ← 时间/百分比/天气文案
+  lib/format.ts       ← 时间/百分比格式化
   styles/base.css     ← 设计变量（配色、字体、圆角）在这里改
-  clock/              ← 时钟
-  sysmon/             ← 系统监控
+  panel/              ← 卡片本体：App.tsx + panel.css + main.tsx
 dist/                 ← 构建产物，zpack.json 的 htmlPath 指向这里
 ```
 
@@ -33,7 +44,7 @@ dist/                 ← 构建产物，zpack.json 的 htmlPath 指向这里
 
    装到 `C:\Program Files\glzr.io\Zebar\`（MSI，机器级，需要 UAC）。
 
-2. 把它接到 Zebar 的扫描目录。Zebar 只扫 `~/.glzr/zebar` 下一层带 `zpack.json` 的文件夹：
+2. 接到 Zebar 的扫描目录。Zebar 只扫 `~/.glzr/zebar` 下一层带 `zpack.json` 的文件夹：
 
    ```
    cmd /c mklink /J "%USERPROFILE%\.glzr\zebar\zebar-widgets" "D:\zebar-widgets"
@@ -41,19 +52,23 @@ dist/                 ← 构建产物，zpack.json 的 htmlPath 指向这里
 
    不用联接的话，每次改完跑 `npm run deploy` 复制过去。两种别混用。
 
-3. 托盘 Zebar 图标 → My widgets → 启动 `clock` 和 `sysmon`。
+3. 托盘 Zebar 图标 → My widgets → 启动 `panel`。
 
 ## 改完怎么生效
 
 | 场景 | 命令 | 之后 |
 | --- | --- | --- |
-| 调样式，想快点看 | `npm run dev` | 浏览器开终端里打印的地址 + `/clock.html` 或 `/sysmon.html`（无宿主，provider 走内置假数据） |
+| 调样式，想快点看 | `npm run dev` | 浏览器开终端里打印的地址 + `/panel.html`（无宿主，provider 走内置假数据） |
 | 要在桌面上看真效果 | `npm run watch` | 增量构建进 `dist/`，再点托盘里的 **Empty cache & reload configs** |
 | 正式构建 | `npm run build` | 类型检查 + 打包 |
 
-Zebar 退出后用开始菜单重开即可。想在终端里看它的实时日志（排查窗口定位、provider 报错最有用），
-直接 `cd "C:\Program Files\glzr.io\Zebar" && .\zebar.exe`，日志打到 stdout。
-`~/.glzr/zebar/errors.log` 只在 pack 配置层面出错时才写。
+想在终端里看 Zebar 的实时日志（排查窗口定位、provider 报错最有用）：
+
+```
+cd "C:\Program Files\glzr.io\Zebar"; .\zebar.exe
+```
+
+日志打到 stdout。`~/.glzr/zebar/errors.log` 只在 pack 配置层面出错时才写。
 
 ## 位置与尺寸
 
@@ -61,38 +76,44 @@ Zebar 退出后用开始菜单重开即可。想在终端里看它的实时日�
 
 - `anchor` 可选 `top_left/top_center/top_right/center_left/center/center_right/bottom_left/bottom_center/bottom_right`
 - **`offset` 的正负是反的**：`right` / `bottom` 锚点上，正数是**往外推**（出屏）。
-  要在右下角留 24px 边距，得写 `-24px`；`top` / `left` 锚点上正数才是往内。
-- `width` / `height` 支持 `px` 和 `%`，是**物理像素**，跟 DPI 缩放无关。
-
-**DPI**：窗口高度是物理 px，但页面里的 CSS px 会被系统缩放放大。150% 缩放下想把
-150px 高的卡片保持原样，得把 `height` 改成 225px（150 × 1.5），CSS 里不用动。
-
-## 常见改动位置
-
-- **配色 / 字体 / 圆角**：`src/styles/base.css` 的 `:root`
-- **卡片排版**：`src/clock/clock.css`、`src/sysmon/sysmon.css`
-- **数据源与刷新率**：对应 `App.tsx` 顶部的 `providers`，`refreshInterval` 单位毫秒。
-  时钟 1000，CPU 2000，内存 3000，磁盘 30000，主机名 60000。
-- **再加一张卡片**：根目录建 `panel.html` → `vite.config.ts` 的 `input` 加一项 →
-  `zpack.json` 的 `widgets` 加一项，`htmlPath` 指向 `./dist/panel.html`。
+  要在右上角留 24px 边距，`offsetX` 要写 `-24px`，`offsetY` 写 `24px`。
+- `width` / `height` 是**物理像素**，跟 DPI 缩放无关。150% 缩放下想让
+  290px 的卡片保持观感，得改成 435px（290 × 1.5），CSS 里不用动。
 
 ## 磁盘行是动态的，窗口也跟着长
 
-`sysmon` 里磁盘不写死，`out.disk.disks` 有几块就渲染几行（卷标见 hover 提示）。
-但 Zebar 的窗口高度写在 preset 里，所以 `src/sysmon/App.tsx` 里用 `ResizeObserver`
-量卡片实际高度，再调 `currentWidget().tauriWindow.setSize()` 把窗口改到同样高。
+磁盘不写死，`out.disk.disks` 有几块就渲染几行（卷标见 hover 提示）。
+窗口高度因此用 `ResizeObserver` 量卡片实际高度，再调
+`currentWidget().tauriWindow.setSize()` 跟着改。
 
 - 只改高度，宽度取 `window.innerWidth`（CSS px 等于逻辑 px），避免 DPI 缩放下宽度漂移。
-- 如果宿主没给 `allow-set-size` 权限，`setSize` 会被拒绝，代码里 catch 后保持 preset 高度
-  （190px，正好装 3 块盘），多出来的盘会被裁掉 —— 这时候改 `zpack.json` 的 `height` 即可。
+- 如果宿主没给 `allow-set-size` 权限，`setSize` 会被拒绝，catch 后保持 preset 高度
+  （290px，正好装 3 块盘），多出来的盘会被裁掉 —— 这时改 `zpack.json` 的 `height` 即可。
+
+## 已知问题
+
+**`Win+D` / 任务栏"显示桌面"会把卡片一起最小化**，之后随便开个窗口才回来。
+原因是 Win+D 最小化所有顶层窗口，而 Zebar 没有提供"桌面层"窗口类型
+（Rainmeter 的 `On Desktop` 就是干这个的，把皮肤挂到 Progman/WorkerW 下）。
+上游 issue tracker 里没有这条记录，pack 层面无法修复。
+
+## 资源开销（实测）
+
+| 方案 | 私有内存 | CPU（15s 采样） |
+| --- | --- | --- |
+| 两个独立窗口（clock + sysmon） | 263 MB | 16 ms（单核 0.10%） |
+| 合并成一个窗口 | **188 MB** | **16 ms（单核 0.10%）** |
+
+CPU 基本是测量精度下限：1Hz 的时钟重渲染一次约 1 ms，其余 provider 各自
+2 s / 3 s / 30 s / 60 s 才刷新一次，可以忽略。
 
 ## 三个坑
 
 - **`network` provider 会 panic**。`netdev-0.33.0` 在 Windows 上解析某些虚拟网卡时触发
   `interface/windows.rs:44` 的 panic（tokio worker 里，进程不退出但那个 provider 死掉，
-  数据永远是空）。所以这里用 `disk` 代替网速。要用网速得换别的路子。
+  数据永远是空）。所以这里用 `disk` 代替网速。
 - **`backdrop-filter` 在 Win11 上失焦后会掉成纯色**。现在卡片用「半透明底色 + 细边框」
-  打底，不依赖毛玻璃也成立；想要更重的玻璃感可配 Mica For Everyone。
+  打底，不依赖毛玻璃也成立。
 - **不要加 StrictMode**：provider 组在挂载时创建，双挂载会重复订阅同一份系统数据。
 
 ## 数据从哪来

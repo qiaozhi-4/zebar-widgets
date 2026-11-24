@@ -1,10 +1,11 @@
 import { useEffect, useRef, type RefObject } from 'react';
 import { currentWidget } from 'zebar';
-import { clamp, toneOf } from '../lib/format';
+import { clamp, dateLabel, timeParts, toneOf } from '../lib/format';
 import { isHosted, useZebar } from '../lib/useZebar';
-import './sysmon.css';
+import './panel.css';
 
 const providers = {
+  date: { type: 'date', refreshInterval: 1000 },
   cpu: { type: 'cpu', refreshInterval: 2000 },
   memory: { type: 'memory', refreshInterval: 3000 },
   disk: { type: 'disk', refreshInterval: 30000 },
@@ -17,9 +18,12 @@ export function App() {
   const out = useZebar(providers);
   const cardRef = useRef<HTMLDivElement>(null);
 
-  const disks = out.disk?.disks ?? [];
+  const now = out.date?.new ?? new Date();
+  const { hhmm, ss } = timeParts(now);
+
   const cpu = clamp(out.cpu?.usage);
   const memory = clamp(out.memory?.usage);
+  const disks = out.disk?.disks ?? [];
 
   const usedRam = out.memory ? (out.memory.usedMemory / GB).toFixed(1) : '—';
   const totalRam = out.memory ? (out.memory.totalMemory / GB).toFixed(0) : '—';
@@ -33,12 +37,26 @@ export function App() {
         <span className="kind">系统</span>
       </div>
 
-      <Row
-        label="CPU"
-        value={cpu}
-        extra={out.cpu ? `${out.cpu.logicalCoreCount} 线程` : undefined}
-      />
-      <Row label="MEM" value={memory} extra={`${usedRam} / ${totalRam} GB`} />
+      <div className="clock">
+        <div className="time">
+          <span className="hhmm num">{hhmm}</span>
+          <span className="ss num">{ss}</span>
+        </div>
+        <div className="date">{dateLabel(now)}</div>
+      </div>
+
+      <div className="rule accent" />
+
+      <div className="rows">
+        <MeterRow
+          label="CPU"
+          value={cpu}
+          extra={out.cpu ? `${out.cpu.logicalCoreCount} 线程` : undefined}
+        />
+        <MeterRow label="MEM" value={memory} extra={`${usedRam} / ${totalRam} GB`} />
+      </div>
+
+      <div className="rule" />
 
       <div className="disks">
         {disks.map((disk) => {
@@ -70,7 +88,7 @@ export function App() {
   );
 }
 
-function Row({
+function MeterRow({
   label,
   value,
   extra,
@@ -80,11 +98,11 @@ function Row({
   extra?: string;
 }) {
   return (
-    <div className={`row tone-${toneOf(value)}`}>
-      <div className="row-top">
-        <span className="row-label">{label}</span>
-        <span className="row-extra">{extra}</span>
-        <span className="row-value num">
+    <div className={`meter tone-${toneOf(value)}`}>
+      <div className="meter-top">
+        <span className="meter-label">{label}</span>
+        <span className="meter-extra">{extra}</span>
+        <span className="meter-value num">
           {Math.round(value)}
           <em>%</em>
         </span>
@@ -99,10 +117,7 @@ function Row({
 type LogicalSize = { type: 'Logical'; width: number; height: number };
 
 /** 磁盘数量是变量，窗口高度得跟着内容走，否则多一块盘就被裁掉。 */
-function useFitToContent(
-  ref: RefObject<HTMLDivElement | null>,
-  ready: boolean
-) {
+function useFitToContent(ref: RefObject<HTMLDivElement | null>, ready: boolean) {
   useEffect(() => {
     if (!isHosted || !ready) return;
     const element = ref.current;
