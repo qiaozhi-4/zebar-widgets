@@ -1,0 +1,57 @@
+:root {
+  color-scheme: dark;
+
+  --bg: 20 20 24;
+  --alpha: 0.78;
+
+  --fg: #e9e7e4;
+  --fg-dim: #8b8985;
+  --fg-faint: #5d5b58;
+
+  --line: 255 255 255 / 0.08;
+
+  --accent: #86d9a0;
+  --warn: #e3b567;
+  --hot: #e0755f;
+
+  --font: 'Segoe UI Variable Text', 'Segoe UI', 'Microsoft YaHei UI', system-ui,
+    sans-serif;
+  --radius: 8px;
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  background: transparent;
+  overflow: hidden;
+}
+
+body {
+  font-family: var(--font);
+  color: var(--fg);
+  font-size: 12px;
+  line-height: 1.2;
+  -webkit-font-smoothing: antialiased;
+  user-select: none;
+  cursor: default;
+}
+
+.num {
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+}
+
+html[data-preview] {
+  background-color: #14141a;
+  background-image:
+    radial-gradient(1100px 520px at 18% -10%, rgb(134 217 160 / 0.12), transparent 60%),
+    radial-gradient(900px 460px at 96% 108%, rgb(126 148 255 / 0.1), transparent 62%);
+}
